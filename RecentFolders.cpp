@@ -19,18 +19,18 @@
 
 #include "NepomukTimelineViewer.h"
 
-#define CONFIG_MAX_FOLDERS              "MaxFolders"
+#define CONFIG_MAX_ITEMS                "MaxItems"
 #define CONFIG_TIMELINE_BACKWARD_DAYS   "TimelineBackwardDays"
 
 
 struct Configuration
 {
-    uint maxFolders;
+    uint maxItems;
     uint timelineBackwardDays;
 
     Configuration()
     {
-        maxFolders = 15;
+        maxItems = 15;
         timelineBackwardDays = 7;
     }
 };
@@ -70,13 +70,13 @@ void RecentFolders::loadConfig()
     KConfig kconfig;
     KConfigGroup generalGroup(&kconfig, "General");
 
-    if (generalGroup.hasKey(CONFIG_MAX_FOLDERS))
+    if (generalGroup.hasKey(CONFIG_MAX_ITEMS))
     {
-        config.maxFolders = generalGroup.readEntry<uint>(CONFIG_MAX_FOLDERS, config.maxFolders);
+        config.maxItems = generalGroup.readEntry<uint>(CONFIG_MAX_ITEMS, config.maxItems);
     }
     else
     {
-        generalGroup.writeEntry(CONFIG_MAX_FOLDERS, config.maxFolders);
+        generalGroup.writeEntry(CONFIG_MAX_ITEMS, config.maxItems);
     }
 
     if (generalGroup.hasKey(CONFIG_TIMELINE_BACKWARD_DAYS))
@@ -139,7 +139,7 @@ void RecentFolders::listDir(const KUrl& url)
                 continue;
             }
 
-            if (i >= config.maxFolders)
+            if (i >= config.maxItems)
             {
                 break;
             }

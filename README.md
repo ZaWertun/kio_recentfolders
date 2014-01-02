@@ -1,5 +1,5 @@
 # kio_recentfolders
-This is the KIO slave for displaying recently used folders (only folders).
+This is the [KIO](http://en.wikipedia.org/wiki/KIO) slave for displaying recently used folders (only folders).
 ![](screenshot.png)
 
 ## Build

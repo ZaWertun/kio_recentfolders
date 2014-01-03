@@ -7,7 +7,7 @@ set(CMAKE_INSTALL_PREFIX `kde4-config --prefix`)
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 include_directories(${KDE4_INCLUDES} ${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR} . ${NEPOMUK_INCLUDE_DIR})
  
-set(recentfolders_PART_SRCS NepomukTimelineViewer.cpp RecentFolders.cpp)
+set(recentfolders_PART_SRCS NepomukQueryRecentFolders.cpp RecentFolders.cpp)
  
 kde4_add_plugin(kio_recentfolders ${recentfolders_PART_SRCS})
  

@@ -10,14 +10,15 @@
 #include <KFileItem>
 #include <KUrl>
 
-#include "NepomukTimelineViewer.h"
+#include "NepomukQueryRecentFolders.h"
 
-NepomukTimelineViewer::NepomukTimelineViewer(uint days)
+NepomukQueryRecentFolders::NepomukQueryRecentFolders(QDateTime sinceDate, uint itemsLimit)
 {
-    this->days = days;
+    this->sinceDate = sinceDate;
+    this->itemsLimit = itemsLimit;
 }
 
-KFileItemList NepomukTimelineViewer::getTimeline()
+KFileItemList NepomukQueryRecentFolders::getTimeline()
 {
     if(Nepomuk::ResourceManager::instance()->init() != 0)
     {
@@ -25,9 +26,12 @@ KFileItemList NepomukTimelineViewer::getTimeline()
         return KFileItemList();
     }
 
-    Nepomuk::Query::ComparisonTerm mtime = Nepomuk::Vocabulary::NIE::lastModified() > Nepomuk::Query::LiteralTerm(QDateTime::currentDateTime().addDays(-1 * this->days));
+    Nepomuk::Query::ComparisonTerm mtime = Nepomuk::Vocabulary::NIE::lastModified() > Nepomuk::Query::LiteralTerm(sinceDate);
     Nepomuk::Query::Query query(mtime);
+    
     Nepomuk::Query::FileQuery fileQuery = query.toFileQuery();
+    fileQuery.setFileMode(Nepomuk::Query::FileQuery::QueryFolders);
+    fileQuery.setLimit(itemsLimit);
 
     KDirLister dirLister;
     dirLister.openUrl(fileQuery.toSearchUrl());
@@ -36,16 +40,4 @@ KFileItemList NepomukTimelineViewer::getTimeline()
     loop.exec();
 
     return dirLister.items();
-}
-
-QList<QString> NepomukTimelineViewer::getTimelineFilesURL()
-{
-    QList<QString> result;
-    KFileItemList timeline = getTimeline();
-    foreach(KFileItem file, timeline)
-    {
-        result << KUrl(file.entry().stringValue(KIO::UDSEntry::UDS_URL)).prettyUrl();
-    }
-
-    return result;
 }

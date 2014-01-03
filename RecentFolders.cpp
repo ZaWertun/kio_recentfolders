@@ -17,7 +17,7 @@
 #include <QSet>
 #include <QString>
 
-#include "NepomukTimelineViewer.h"
+#include "NepomukQueryRecentFolders.h"
 
 #define CONFIG_MAX_ITEMS                "MaxItems"
 #define CONFIG_TIMELINE_BACKWARD_DAYS   "TimelineBackwardDays"
@@ -129,31 +129,19 @@ void RecentFolders::listDir(const KUrl& url)
         KIO::UDSEntryList udslist;
         QSet<KUrl> urlSet;//For unique file display
 
-        NepomukTimelineViewer timeline(config.timelineBackwardDays);
-        KFileItemList timelineResult = timeline.getTimeline();
-        uint i = 0;
+        NepomukQueryRecentFolders nepomukQuery(QDateTime::currentDateTime().addDays(-1 * config.timelineBackwardDays), config.maxItems);
+        KFileItemList timelineResult = nepomukQuery.getTimeline();
         foreach (KFileItem file, timelineResult)
         {
-            if (!file.isDir())
-            {
-                continue;
-            }
-
-            if (i >= config.maxItems)
-            {
-                break;
-            }
-
             KIO::UDSEntry entry = file.entry();
-            QString path = getShortPath(entry.stringValue(KIO::UDSEntry::UDS_LOCAL_PATH));
-            entry.insert(KIO::UDSEntry::UDS_DISPLAY_NAME, path);
+            entry.insert(KIO::UDSEntry::UDS_DISPLAY_NAME, getShortPath(entry.stringValue(KIO::UDSEntry::UDS_LOCAL_PATH)));
+            
             KUrl fileUrl(entry.stringValue(KIO::UDSEntry::UDS_LOCAL_PATH));
             entry.insert(KIO::UDSEntry::UDS_NAME, fileUrl.path());
             if (!urlSet.contains(fileUrl))
             {
                 udslist << entry;
                 urlSet << fileUrl;
-                i += 1;
             }
         }
 

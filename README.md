@@ -1,5 +1,7 @@
 # kio_recentfolders
 This is the [KIO](http://en.wikipedia.org/wiki/KIO) slave for displaying recently used folders (only folders).
+
+This KIO slave only works when Nepomuk service is enabled.
 ![](screenshot.png)
 
 ## Build

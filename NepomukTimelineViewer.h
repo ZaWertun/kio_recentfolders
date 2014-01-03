@@ -8,8 +8,7 @@ private:
     uint days;//look backward how many days
 
 public:
-    NepomukTimelineViewer(uint days);
-    NepomukTimelineViewer();
+    NepomukTimelineViewer(uint days = DEFAULT_TIMELINE_DAYS);
     KFileItemList getTimeline();
     QList<QString> getTimelineFilesURL();
 };

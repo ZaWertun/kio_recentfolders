@@ -106,7 +106,7 @@ static QString getShortPath(QString path)
 bool isRootUrl(const KUrl& url)
 {
     const QString path = url.path(KUrl::RemoveTrailingSlash);
-    return (!url.hasQuery() && (path.isEmpty() || path == QLatin1String("/")))
+    return (!url.hasQuery() && (path.isEmpty() || path == "/"))
            || url.prettyUrl() == "recentfolders:/";
 }
 

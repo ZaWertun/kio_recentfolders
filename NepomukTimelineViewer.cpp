@@ -17,11 +17,6 @@ NepomukTimelineViewer::NepomukTimelineViewer(uint days)
     this->days = days;
 }
 
-NepomukTimelineViewer::NepomukTimelineViewer()
-{
-    this->days = DEFAULT_TIMELINE_DAYS;
-}
-
 KFileItemList NepomukTimelineViewer::getTimeline()
 {
     if(Nepomuk::ResourceManager::instance()->init() != 0)

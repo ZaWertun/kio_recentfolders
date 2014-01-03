@@ -1,5 +1,4 @@
 [Protocol]
-DocPath=kioslave/recentfolders.html
 exec=kio_recentfolders
 protocol=recentfolders
 Icon=document-open-recent
@@ -10,5 +9,5 @@ reading=true
 opening=true
 writing=true
 deleting=true
-maxInstances=4
+maxInstances=1
 Class=:local

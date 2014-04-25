@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <iostream>
 #include <KIO/ForwardingSlaveBase>
 #include <KGlobal>
 #include <KIO/Job>
@@ -17,7 +18,7 @@
 #include <QSet>
 #include <QString>
 
-#include "NepomukQueryRecentFolders.h"
+#include "BalooQueryRecentFolders.h"
 
 #define CONFIG_MAX_ITEMS                "MaxItems"
 #define CONFIG_TIMELINE_BACKWARD_DAYS   "TimelineBackwardDays"
@@ -122,37 +123,38 @@ void RecentFolders::del (const KUrl &url, bool isFile)
 
 void RecentFolders::listDir(const KUrl& url)
 {
-    if (isRootUrl(url))
-    {
-        //flush
-        listEntry(KIO::UDSEntry(), true);
-        KIO::UDSEntryList udslist;
-        QSet<KUrl> urlSet;//For unique file display
-
-        NepomukQueryRecentFolders nepomukQuery(QDateTime::currentDateTime().addDays(-1 * config.timelineBackwardDays), config.maxItems);
-        KFileItemList timelineResult = nepomukQuery.getTimeline();
-        foreach (KFileItem file, timelineResult)
-        {
-            KIO::UDSEntry entry = file.entry();
-            entry.insert(KIO::UDSEntry::UDS_DISPLAY_NAME, getShortPath(entry.stringValue(KIO::UDSEntry::UDS_LOCAL_PATH)));
-            
-            KUrl fileUrl(entry.stringValue(KIO::UDSEntry::UDS_LOCAL_PATH));
-            entry.insert(KIO::UDSEntry::UDS_NAME, fileUrl.path());
-            if (!urlSet.contains(fileUrl))
-            {
-                udslist << entry;
-                urlSet << fileUrl;
-            }
-        }
-
-        listEntries(udslist);
-        listEntry(KIO::UDSEntry(), true);
-        finished();
-    }
-    else
-    {
+    if (!isRootUrl(url))
+    {   
         error(KIO::ERR_DOES_NOT_EXIST, url.prettyUrl());
+        return;
     }
+     
+    //flush
+    listEntry(KIO::UDSEntry(), true);
+    KIO::UDSEntryList udslist;
+
+    BalooQueryRecentFolders queryRecentFolders(QDateTime::currentDateTime().addDays(-1 * config.timelineBackwardDays), config.maxItems);
+    KFileItemList list = queryRecentFolders.execute();
+    for (KFileItemList::iterator it = list.begin(); it < list.end(); ++it)
+    {
+        KFileItem file = *it;        
+        KIO::UDSEntry entry;
+       
+        entry.insert(KIO::UDSEntry::UDS_DISPLAY_NAME, getShortPath(file.localPath()));
+        
+        KUrl fileUrl(file.localPath());
+        entry.insert(KIO::UDSEntry::UDS_NAME, fileUrl.path());
+        entry.insert(KIO::UDSEntry::UDS_URL, fileUrl.path());
+        
+        entry.insert(KIO::UDSEntry::UDS_FILE_TYPE, S_IFDIR);
+        entry.insert(KIO::UDSEntry::UDS_MIME_TYPE, "inode/directory");
+        
+        udslist << entry;
+    }
+
+    listEntries(udslist);
+    listEntry(KIO::UDSEntry(), true);
+    finished();
 }
 
 void RecentFolders::mimetype(const KUrl & url)

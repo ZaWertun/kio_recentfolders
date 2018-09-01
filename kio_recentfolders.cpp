@@ -121,8 +121,8 @@ static const QDateTime DateTime = QDateTime::currentDateTime();
 void RecentFolders::stat(const QUrl&)
 {
     KIO::UDSEntry uds;
-    uds.fastInsert(KIO::UDSEntry::UDS_NAME, i18n("Recent Folders"));
-    uds.fastInsert(KIO::UDSEntry::UDS_DISPLAY_NAME, i18n("Recent Folders"));
+    uds.fastInsert(KIO::UDSEntry::UDS_NAME, i18n("Recent Places"));
+    uds.fastInsert(KIO::UDSEntry::UDS_DISPLAY_NAME, i18n("Recent Places"));
     uds.fastInsert(KIO::UDSEntry::UDS_FILE_TYPE, S_IFDIR);
     uds.fastInsert(KIO::UDSEntry::UDS_MIME_TYPE, QStringLiteral("inode/directory"));
     uds.fastInsert(KIO::UDSEntry::UDS_MODIFICATION_TIME, DateTime.toTime_t());

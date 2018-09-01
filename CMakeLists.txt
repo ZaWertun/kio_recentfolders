@@ -1,20 +1,29 @@
-project(recentfolders)
+cmake_minimum_required(VERSION 3.5)
+set(QT_MIN_VERSION "5.4.0")
+set(KF5_MIN_VERSION "5.16.0")
 
-FIND_PACKAGE(Qt4 REQUIRED)
-FIND_PACKAGE(KDE4 REQUIRED)
-FIND_PACKAGE(Baloo REQUIRED)
-set(CMAKE_INSTALL_PREFIX `kde4-config --prefix`)
-add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-include_directories(${KDE4_INCLUDES} ${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR} . ${BALOO_INCLUDE_DIR})
- 
-set(recentfolders_PART_SRCS BalooQueryRecentFolders.cpp RecentFolders.cpp)
- 
-kde4_add_plugin(kio_recentfolders ${recentfolders_PART_SRCS})
- 
-target_link_libraries(kio_recentfolders ${KDE4_KIO_LIBS} ${BALOO_QUERY_LIBRARIES} ${BALOO_UTILS_LIBRARIES} ${BALOO_LIBRARIES})
- 
-install(TARGETS kio_recentfolders DESTINATION ${PLUGIN_INSTALL_DIR})
+find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
+set(CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    ${ECM_MODULE_PATH}
+    ${ECM_KDE_MODULE_DIR})
 
-########### install files ###############
+include(KDEInstallDirs)
+include(KDECMakeSettings)
+include(KDECompilerSettings NO_POLICY_SCOPE)
+include(ECMSetupVersion)
+include(FeatureSummary)
 
-install(FILES recentfolders.protocol  DESTINATION  ${SERVICES_INSTALL_DIR})
+find_package(Qt5 ${QT_MIN_VERSION} REQUIRED Core Network)
+find_package(KF5 ${KF5_MIN_VERSION} REQUIRED KIO I18n Baloo)
+add_library(kio_recentfolders MODULE kio_recentfolders.cpp)
+
+target_link_libraries(kio_recentfolders
+    KF5::KIOCore
+    KF5::I18n
+    KF5::Baloo
+    Qt5::Network)
+set_target_properties(kio_recentfolders PROPERTIES OUTPUT_NAME "recentfolders")
+
+install(TARGETS kio_recentfolders      DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5/kio)
+install(FILES   recentfolders.protocol DESTINATION ${SERVICES_INSTALL_DIR})

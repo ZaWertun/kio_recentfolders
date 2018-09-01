@@ -35,6 +35,7 @@ public:
 
 private:
     QString toPretty(const QString& path);
+    KIO::UDSEntry getUdsEntry(const QString& path);
 };
 
 #endif

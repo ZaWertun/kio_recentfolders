@@ -13,4 +13,4 @@ listing=Name,Type,Size,Date,AccessDate,Access,Owner,Group,Link
 source=false
 Icon=baloo
 Class=:local
-maxInstances=20
+maxInstances=10

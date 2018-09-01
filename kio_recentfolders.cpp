@@ -44,57 +44,67 @@ RecentFolders::~RecentFolders()
 
 QString RecentFolders::toPretty(const QString& path)
 {
-    if (path.startsWith(HomeDir))
-    {
+    if (path.startsWith(HomeDir)) {
         return QStringLiteral("~") + path.mid(HomeDirLength);
     }
     return path;
 }
 
-const qint64 BackDays = 7;  // TODO: read from config
-const uint MaxResults = 25; // TODO: read from config
+KIO::UDSEntry RecentFolders::getUdsEntry(const QString& path)
+{
+    KIO::UDSEntry uds;
+    uds.fastInsert(KIO::UDSEntry::UDS_FILE_TYPE, S_IFDIR);
+    uds.fastInsert(KIO::UDSEntry::UDS_MIME_TYPE, QStringLiteral("inode/directory"));
+    uds.fastInsert(KIO::UDSEntry::UDS_NAME, path);
+    uds.fastInsert(KIO::UDSEntry::UDS_DISPLAY_NAME, toPretty(path));
+    uds.fastInsert(KIO::UDSEntry::UDS_URL, QUrl::fromLocalFile(path).toString());
+    return uds;
+}
+
+static const qint64 BackDays = 7;  // TODO: read from config
+static const uint MaxResults = 30; // TODO: read from config
 
 void RecentFolders::listDir(const QUrl& url)
 {
-    if (url.toString() != "recentfolders:/")
-    {
+    if (url.toString() != "recentfolders:/") {
         error(KIO::ERR_DOES_NOT_EXIST, url.toString());
         return;
     }
 
     Baloo::IndexerConfig indexerConfig;
-    if (!indexerConfig.fileIndexingEnabled())
-    {
+    if (!indexerConfig.fileIndexingEnabled()) {
         error(KIO::ERR_NO_CONTENT, i18n("File indexing disabled, nothing to do :("));
         return ;
     }
 
-    Baloo::Query query = Baloo::Query::fromSearchUrl(HomeDir);
-    query.setType(QStringLiteral("Folder"));
+    KIO::UDSEntry dot;
+    dot.fastInsert(KIO::UDSEntry::UDS_NAME, QStringLiteral("."));
+    listEntry(dot);
 
     uint count = 0;
-    QDateTime since = QDateTime::currentDateTime().addDays(-1 * BackDays);
-    Baloo::ResultIterator it = query.exec();
-    while (it.next() && count < MaxResults)
-    {
-        QString filePath = it.filePath();
-        if (filePath == HomeDir)
-        {
-            continue;
-        }
+    QDate date = QDate::currentDate();
+    QDate minDate = date.addDays(-1 * BackDays);
+    while (count < MaxResults && date >= minDate) {
+        Baloo::Query query = Baloo::Query::fromSearchUrl(HomeDir);
+        query.setType(QStringLiteral("Folder"));
+        query.setDateFilter(date.year(), date.month(), date.day());
+        query.setSortingOption(Baloo::Query::SortNone);
 
-        QFileInfo fileInfo(filePath);
-        if (fileInfo.lastModified() > since)
-        {
-            KIO::UDSEntry uds;
-            uds.fastInsert(KIO::UDSEntry::UDS_FILE_TYPE, S_IFDIR);
-            uds.fastInsert(KIO::UDSEntry::UDS_MIME_TYPE, QStringLiteral("inode/directory"));
-            uds.fastInsert(KIO::UDSEntry::UDS_NAME, filePath);
-            uds.fastInsert(KIO::UDSEntry::UDS_DISPLAY_NAME, toPretty(filePath));
-            uds.fastInsert(KIO::UDSEntry::UDS_URL, QUrl::fromLocalFile(filePath).toString());
-            listEntry(uds);
+        QString lastPath;
+        Baloo::ResultIterator it = query.exec();
+        while (it.next() && count < MaxResults) {
+            QString filePath = it.filePath();
+            if (filePath == HomeDir
+                || (!lastPath.isEmpty() && filePath.startsWith(lastPath))) {
+                continue;
+            }
+
+            listEntry(getUdsEntry(filePath));
+            lastPath = filePath;
             count++;
         }
+
+        date = date.addDays(-1);
     }
 
     finished();
@@ -117,7 +127,7 @@ void RecentFolders::stat(const QUrl&)
     uds.fastInsert(KIO::UDSEntry::UDS_MIME_TYPE, QStringLiteral("inode/directory"));
     uds.fastInsert(KIO::UDSEntry::UDS_MODIFICATION_TIME, DateTime.toTime_t());
     uds.fastInsert(KIO::UDSEntry::UDS_CREATION_TIME, DateTime.toTime_t());
-    uds.fastInsert(KIO::UDSEntry::UDS_ACCESS, 0700);
+    uds.fastInsert(KIO::UDSEntry::UDS_ACCESS, 0500);
     uds.fastInsert(KIO::UDSEntry::UDS_USER, KUser().loginName());
 
     statEntry(uds);

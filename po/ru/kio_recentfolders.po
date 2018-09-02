@@ -1,0 +1,29 @@
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Sidlovsky Yaroslav <zawertun@gmail.com>, 2018.
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: http://bugs.kde.org\n"
+"POT-Creation-Date: 2018-09-02 02:52+0300\n"
+"PO-Revision-Date: 2018-09-02 03:01+0300\n"
+"Last-Translator: Sidlovsky Yaroslav <zawertun@gmail.com>\n"
+"Language-Team: Russian <>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<"
+"=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 2.0\n"
+
+#: kio_recentfolders.cpp:76
+#, kde-format
+msgid "File indexing disabled, nothing to do :("
+msgstr "Индексирование файлов не включено, делать нечего :("
+
+#: kio_recentfolders.cpp:124 kio_recentfolders.cpp:125
+#, kde-format
+msgid "Recent Places"
+msgstr "Недавние документы"

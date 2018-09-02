@@ -27,3 +27,4 @@ set_target_properties(kio_recentfolders PROPERTIES OUTPUT_NAME "recentfolders")
 
 install(TARGETS kio_recentfolders      DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf5/kio)
 install(FILES   recentfolders.protocol DESTINATION ${SERVICES_INSTALL_DIR})
+ki18n_install(po)

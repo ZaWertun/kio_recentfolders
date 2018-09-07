@@ -16,6 +16,10 @@ public:
     void stat(const QUrl&) override;
 
 private:
+    uint backDays;
+    uint maxResults;
+
+    void loadConfig();
     QString toPretty(const QString& path);
     KIO::UDSEntry getUdsEntry(const QString& path);
 };

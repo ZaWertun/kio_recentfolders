@@ -6,22 +6,50 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 
+#include <KConfig>
 #include <KFileItem>
+#include <KConfigGroup>
+#include <KSharedConfig>
 #include <KLocalizedString>
 
 #include <baloo/indexerconfig.h>
 #include <baloo/query.h>
 
+#define CONFIG_BACK_DAYS           QStringLiteral("BackDays")
+#define CONFIG_BACK_DAYS_DEFAULT   7
+
+#define CONFIG_MAX_RESULTS         QStringLiteral("MaxResults")
+#define CONFIG_MAX_RESULTS_DEFAULT 150
+
 static const QString HomeDir = KUser().homeDir();
 static const int HomeDirLength = HomeDir.length();
 
 RecentFolders::RecentFolders(const QByteArray &pool, const QByteArray &app)
-    : SlaveBase("recentfolders", pool, app)
+    : SlaveBase("recentfolders", pool, app), backDays(CONFIG_BACK_DAYS_DEFAULT), maxResults(CONFIG_MAX_RESULTS_DEFAULT)
 {
+    loadConfig();
 }
 
 RecentFolders::~RecentFolders()
 {
+}
+
+void RecentFolders::loadConfig()
+{
+    KSharedConfig::Ptr config = KSharedConfig::openConfig(QStringLiteral("kio_recentfolders"));
+    KConfigGroup group = config->group(QStringLiteral("General"));
+
+    if (group.hasKey(CONFIG_BACK_DAYS)) {
+        backDays = group.readEntry<uint>(CONFIG_BACK_DAYS, backDays);
+    } else {
+        group.writeEntry(CONFIG_BACK_DAYS, backDays);
+    }
+
+    if (group.hasKey(CONFIG_MAX_RESULTS)) {
+        maxResults = group.readEntry<uint>(CONFIG_MAX_RESULTS, maxResults);
+    } else {
+        group.writeEntry(CONFIG_MAX_RESULTS, maxResults);
+    }
 }
 
 QString RecentFolders::toPretty(const QString& path)
@@ -43,8 +71,6 @@ KIO::UDSEntry RecentFolders::getUdsEntry(const QString& path)
     return uds;
 }
 
-static const qint64 BackDays = 3;  // TODO: read from config
-
 void RecentFolders::listDir(const QUrl& url)
 {
     if (url.toString() != "recentfolders:/") {
@@ -63,11 +89,12 @@ void RecentFolders::listDir(const QUrl& url)
     listEntry(dot);
 
     QDate date = QDate::currentDate();
-    QDate minDate = date.addDays(-1 * BackDays);
+    QDate minDate = date.addDays(-1 * (qint64)backDays);
     QSet<QString> data;
-    while (date >= minDate) {
+    while (date > minDate) {
         Baloo::Query query = Baloo::Query::fromSearchUrl(HomeDir);
         query.setType(QStringLiteral("Folder"));
+        query.setLimit(maxResults);
         query.setDateFilter(date.year(), date.month(), date.day());
         query.setSortingOption(Baloo::Query::SortNone);
 

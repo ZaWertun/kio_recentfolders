@@ -17,14 +17,17 @@ sudo make install
 ```
 
 ## Configuration
-The KIO slave can be configured via configuration file.
+The KIO slave can be configured via configuration file `~/.config/kio_recentfolders`.
 The file will be created after first run of the KIO slave (you need to open URL ```recentfolders:/``` in Dolphin or Konqueror).
 
 Those options can be configured:
-* TimelineBackwardDays — how many days to look backward in history.
+* BackDays — how many days to look for changed folders back in history;
+* MaxResults - maximum results when quering one day
+    (setting this to lower values will greatly increase speed).
 
 Default configuration:
 ```ini
 [General]
-TimelineBackwardDays=7
+BackDays=7
+MaxResults=150
 ```

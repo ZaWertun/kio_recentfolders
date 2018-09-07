@@ -7,7 +7,7 @@ This KIO slave only works when Baloo service is enabled.
 ## Build
 ```bash
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$(kde4-config --prefix)
+cmake ..
 make
 ```
 

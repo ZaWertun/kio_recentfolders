@@ -1,29 +1,11 @@
-/***************************************************************************
- *   Copyright (C) 2016 by Arnav Dhamija <arnav.dhamija@gmail.com>         *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA            *
- ***************************************************************************/
-
 #include "kio_recentfolders.h"
 
+#include <QDir>
+#include <QPair>
 #include <QDebug>
 #include <QFileInfo>
 #include <QCoreApplication>
 
-#include <KUser>
 #include <KFileItem>
 #include <KLocalizedString>
 
@@ -61,8 +43,7 @@ KIO::UDSEntry RecentFolders::getUdsEntry(const QString& path)
     return uds;
 }
 
-static const qint64 BackDays = 7;  // TODO: read from config
-static const uint MaxResults = 30; // TODO: read from config
+static const qint64 BackDays = 3;  // TODO: read from config
 
 void RecentFolders::listDir(const QUrl& url)
 {
@@ -81,30 +62,48 @@ void RecentFolders::listDir(const QUrl& url)
     dot.fastInsert(KIO::UDSEntry::UDS_NAME, QStringLiteral("."));
     listEntry(dot);
 
-    uint count = 0;
     QDate date = QDate::currentDate();
     QDate minDate = date.addDays(-1 * BackDays);
-    while (count < MaxResults && date >= minDate) {
+    QSet<QString> data;
+    while (date >= minDate) {
         Baloo::Query query = Baloo::Query::fromSearchUrl(HomeDir);
         query.setType(QStringLiteral("Folder"));
         query.setDateFilter(date.year(), date.month(), date.day());
         query.setSortingOption(Baloo::Query::SortNone);
 
-        QString lastPath;
-        Baloo::ResultIterator it = query.exec();
-        while (it.next() && count < MaxResults) {
-            QString filePath = it.filePath();
-            if (filePath == HomeDir
-                || (!lastPath.isEmpty() && filePath.startsWith(lastPath))) {
+        Baloo::ResultIterator resultIterator = query.exec();
+        while (resultIterator.next()) {
+            QString dir = resultIterator.filePath();
+            if (dir == HomeDir)
                 continue;
+
+            bool found = false;
+            for (uint i = 0; i < 3; ++i) {
+                QFileInfo info(dir);
+                QString parent = info.dir().path();
+
+                if (parent == HomeDir)
+                    break;
+
+                if (data.contains(parent)) {
+                    found = true;
+                    break;
+                } else {
+                    dir = parent;
+                }
             }
 
-            listEntry(getUdsEntry(filePath));
-            lastPath = filePath;
-            count++;
+            if (!found) {
+                data.insert(dir);
+            }
         }
 
         date = date.addDays(-1);
+    }
+
+    QSet<QString>::const_iterator it;
+    for (it = data.constBegin(); it != data.constEnd(); ++it) {
+        listEntry(getUdsEntry(*it));
     }
 
     finished();

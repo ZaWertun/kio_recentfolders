@@ -90,7 +90,6 @@ void RecentFolders::listDir(const QUrl& url)
 
     QDate date = QDate::currentDate();
     QDate minDate = date.addDays(-1 * (qint64)backDays);
-    QSet<QString> data;
     while (date > minDate) {
         Baloo::Query query = Baloo::Query::fromSearchUrl(HomeDir);
         query.setType(QStringLiteral("Folder"));
@@ -101,36 +100,12 @@ void RecentFolders::listDir(const QUrl& url)
         Baloo::ResultIterator resultIterator = query.exec();
         while (resultIterator.next()) {
             QString dir = resultIterator.filePath();
-            if (dir == HomeDir)
-                continue;
-
-            bool found = false;
-            for (uint i = 0; i < 3; ++i) {
-                QFileInfo info(dir);
-                QString parent = info.dir().path();
-
-                if (parent == HomeDir)
-                    break;
-
-                if (data.contains(parent)) {
-                    found = true;
-                    break;
-                } else {
-                    dir = parent;
-                }
-            }
-
-            if (!found) {
-                data.insert(dir);
+            if (dir != HomeDir && QFileInfo(dir).exists()) {
+                listEntry(getUdsEntry(dir));
             }
         }
 
         date = date.addDays(-1);
-    }
-
-    QSet<QString>::const_iterator it;
-    for (it = data.constBegin(); it != data.constEnd(); ++it) {
-        listEntry(getUdsEntry(*it));
     }
 
     finished();

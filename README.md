@@ -21,13 +21,10 @@ The KIO slave can be configured via configuration file `~/.config/kio_recentfold
 The file will be created after first run of the KIO slave (you need to open URL ```recentfolders:/``` in Dolphin or Konqueror).
 
 Those options can be configured:
-* BackDays — how many days to look for changed folders back in history;
-* MaxResults - maximum results when quering one day
-    (setting this to lower values will greatly increase speed).
+* BackDays — how many days to look for changed folders back in history.
 
 Default configuration:
 ```ini
 [General]
 BackDays=7
-MaxResults=150
 ```

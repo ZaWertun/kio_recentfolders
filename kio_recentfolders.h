@@ -17,11 +17,12 @@ public:
 
 private:
     uint backDays;
-    uint maxResults;
 
     void loadConfig();
     QString toPretty(const QString& path);
     KIO::UDSEntry getUdsEntry(const QString& path);
+    QStringList queryDate(const QString& root, const QDate& date);
+    QStringList compactDirs(const uint level, const QStringList& dirs);
 };
 
 #endif // KIO_RECENT_FOLDERS_H

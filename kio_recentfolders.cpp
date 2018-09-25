@@ -15,17 +15,16 @@
 #include <baloo/indexerconfig.h>
 #include <baloo/query.h>
 
+#define COMPACT_LEVEL   2
+
 #define CONFIG_BACK_DAYS           QStringLiteral("BackDays")
 #define CONFIG_BACK_DAYS_DEFAULT   7
-
-#define CONFIG_MAX_RESULTS         QStringLiteral("MaxResults")
-#define CONFIG_MAX_RESULTS_DEFAULT 150
 
 static const QString HomeDir = KUser().homeDir();
 static const int HomeDirLength = HomeDir.length();
 
 RecentFolders::RecentFolders(const QByteArray &pool, const QByteArray &app)
-    : SlaveBase("recentfolders", pool, app), backDays(CONFIG_BACK_DAYS_DEFAULT), maxResults(CONFIG_MAX_RESULTS_DEFAULT)
+    : SlaveBase("recentfolders", pool, app), backDays(CONFIG_BACK_DAYS_DEFAULT)
 {
     loadConfig();
 }
@@ -43,12 +42,6 @@ void RecentFolders::loadConfig()
         backDays = group.readEntry<uint>(CONFIG_BACK_DAYS, backDays);
     } else {
         group.writeEntry(CONFIG_BACK_DAYS, backDays);
-    }
-
-    if (group.hasKey(CONFIG_MAX_RESULTS)) {
-        maxResults = group.readEntry<uint>(CONFIG_MAX_RESULTS, maxResults);
-    } else {
-        group.writeEntry(CONFIG_MAX_RESULTS, maxResults);
     }
 }
 
@@ -71,6 +64,57 @@ KIO::UDSEntry RecentFolders::getUdsEntry(const QString& path)
     return uds;
 }
 
+QStringList RecentFolders::compactDirs(const uint level, const QStringList& dirs)
+{
+    QMap<QString, uint> map;
+    foreach (QString dir, dirs) {
+        map.insert(dir, 1);
+    }
+
+    foreach (QString dir, dirs) {
+        QFileInfo fileInfo(dir);
+        for (uint i = 0; i < level; ++i) {
+            QString parent = fileInfo.dir().path();
+            if (map.contains(parent)) {
+                if (map.contains(dir) && map[dir] == 1) {
+                    map[dir] = 0;
+                }
+                map[parent] += 1;
+            }
+        }
+    }
+
+    QStringList result;
+    QMapIterator<QString, uint> it(map);
+    while (it.hasNext()) {
+        it.next();
+        if (it.value() > 0) {
+            result << it.key();
+        }
+    }
+
+    return result;
+}
+
+QStringList RecentFolders::queryDate(const QString& root, const QDate& date)
+{
+    QStringList result;
+    Baloo::Query query = Baloo::Query::fromSearchUrl(root);
+    query.setType(QStringLiteral("Folder"));
+    query.setDateFilter(date.year(), date.month(), date.day());
+    query.setSortingOption(Baloo::Query::SortNone);
+
+    Baloo::ResultIterator resultIterator = query.exec();
+    while (resultIterator.next()) {
+        QString dir = resultIterator.filePath();
+        if (dir != HomeDir && QFileInfo(dir).exists()) {
+            result << dir;
+        }
+    }
+
+    return result;
+}
+
 void RecentFolders::listDir(const QUrl& url)
 {
     if (url.toString() != "recentfolders:/") {
@@ -88,23 +132,19 @@ void RecentFolders::listDir(const QUrl& url)
     dot.fastInsert(KIO::UDSEntry::UDS_NAME, QStringLiteral("."));
     listEntry(dot);
 
+    QSet<QString> added;
     QDate date = QDate::currentDate();
     QDate minDate = date.addDays(-1 * (qint64)backDays);
     while (date > minDate) {
-        Baloo::Query query = Baloo::Query::fromSearchUrl(HomeDir);
-        query.setType(QStringLiteral("Folder"));
-        query.setLimit(maxResults);
-        query.setDateFilter(date.year(), date.month(), date.day());
-        query.setSortingOption(Baloo::Query::SortNone);
+        QStringList dirs = queryDate(HomeDir, date);
+        QStringList compacted = compactDirs(COMPACT_LEVEL, dirs);
+        foreach (QString dir, compacted) {
+            if (added.contains(dir))
+                continue;
 
-        Baloo::ResultIterator resultIterator = query.exec();
-        while (resultIterator.next()) {
-            QString dir = resultIterator.filePath();
-            if (dir != HomeDir && QFileInfo(dir).exists()) {
-                listEntry(getUdsEntry(dir));
-            }
+            listEntry(getUdsEntry(dir));
+            added << dir;
         }
-
         date = date.addDays(-1);
     }
 
